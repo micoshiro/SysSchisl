@@ -1,0 +1,123 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+// Функция для перевода символа в его числовое значение
+int charToValue(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'A' && c <= 'V') {
+        return c - 'A' + 10;
+    } else {
+        throw invalid_argument("Invalid character for base conversion");
+    }
+}
+
+// Функция для перевода числового значения в символ
+char valueToChar(int value) {
+    if (value >= 0 && value <= 9) {
+        return '0' + value;
+    } else if (value >= 10 && value < 32) {
+        return 'A' + (value - 10);
+    } else {
+        throw invalid_argument("Value out of range for base conversion");
+    }
+}
+
+// Перевод целой части числа из произвольной системы счисления в десятичную
+long long toDecimalInteger(const string& number, int base) {
+    long long decimalValue = 0;
+    int length = number.size();
+    for (int i = 0; i < length; ++i) {
+        decimalValue += charToValue(number[i]) * pow(base, length - i - 1);
+    }
+    return decimalValue;
+}
+
+// Перевод дробной части числа из произвольной системы счисления в десятичную
+double toDecimalFraction(const string& fraction, int base) {
+    double decimalValue = 0.0;
+    int length = fraction.size();
+    for (int i = 0; i < length; ++i) {
+        decimalValue += charToValue(fraction[i]) / pow(base, i + 1);
+    }
+    return decimalValue;
+}
+
+// Перевод целой части числа из десятичной системы в любую другую
+string fromDecimalInteger(long long decimal, int base) {
+    if (decimal == 0) return "0";
+    string result;
+    while (decimal > 0) {
+        result += valueToChar(decimal % base);
+        decimal /= base;
+    }
+    reverse(result.begin(), result.end());
+    return result;
+}
+
+// Перевод дробной части числа из десятичной системы в любую другую
+string fromDecimalFraction(double fraction, int base, int precision = 10) {
+    string result;
+    for (int i = 0; i < precision; ++i) {
+        fraction *= base;
+        int integerPart = static_cast<int>(fraction);
+        result += valueToChar(integerPart);
+        fraction -= integerPart;
+        if (fraction == 0) break; // Если дробная часть стала 0, остановить
+    }
+    return result;
+}
+
+int main() {
+    string number;
+    int fromBase, toBase;
+
+    // Ввод исходной системы счисления
+    cout << "Введите основание исходной системы счисления (от 2 до 32): ";
+    cin >> fromBase;
+
+    if (fromBase < 2 || fromBase > 32) {
+        cout << "Основание должно быть в пределах от 2 до 32." << endl;
+        return 1;
+    }
+
+    // Ввод числа
+    cout << "Введите число в исходной системе счисления (включая дробную часть через точку): ";
+    cin >> number;
+
+    // Разделение на целую и дробную часть
+    size_t dotPos = number.find('.');
+    string integerPart = (dotPos == string::npos) ? number : number.substr(0, dotPos);
+    string fractionPart = (dotPos == string::npos) ? "" : number.substr(dotPos + 1);
+
+    // Перевод в десятичную систему
+    long long decimalInteger = toDecimalInteger(integerPart, fromBase);
+    double decimalFraction = fractionPart.empty() ? 0.0 : toDecimalFraction(fractionPart, fromBase);
+    double decimalValue = decimalInteger + decimalFraction;
+
+    // Ввод целевой системы счисления
+    cout << "Введите основание целевой системы счисления (от 2 до 32): ";
+    cin >> toBase;
+
+    if (toBase < 2 || toBase > 32) {
+        cout << "Основание должно быть в пределах от 2 до 32." << endl;
+        return 1;
+    }
+
+    // Перевод из десятичной системы в целевую
+    string resultInteger = fromDecimalInteger(decimalInteger, toBase);
+    string resultFraction = decimalFraction == 0.0 ? "" : fromDecimalFraction(decimalFraction, toBase);
+
+    // Вывод результата
+    cout << "Результат перевода: " << resultInteger;
+    if (!resultFraction.empty()) {
+        cout << "." << resultFraction;
+    }
+    cout << endl;
+
+    return 0;
+}
